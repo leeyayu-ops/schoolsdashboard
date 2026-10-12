@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uplift 2.0 Schools Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #2d3748; }
+
+  .header {
+    background: linear-gradient(135deg, #1a365d, #2b6cb0);
+    color: white; padding: 20px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 600; }
+  .header p  { font-size: 0.8rem; opacity: 0.8; margin-top: 4px; }
+  .badge {
+    background: #fc8181; color: white; font-size: 0.7rem;
+    padding: 4px 10px; border-radius: 12px; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .nav-bar {
+    background: white; border-bottom: 2px solid #e2e8f0;
+    padding: 0 32px; display: flex; gap: 0;
+  }
+  .nav-btn {
+    padding: 14px 22px; border: none; background: none;
+    font-size: 0.88rem; font-weight: 600; color: #718096;
+    cursor: pointer; border-bottom: 3px solid transparent;
+    margin-bottom: -2px; transition: all 0.2s;
+  }
+  .nav-btn:hover  { color: #2b6cb0; }
+  .nav-btn.active { color: #2b6cb0; border-bottom-color: #2b6cb0; }
+  .page        { display: none; }
+  .page.active { display: block; }
+  .main        { padding: 24px 32px; }
+</style>
+
+<style>
+  .privacy-notice {
+    background: #fffbeb; border: 1px solid #f6e05e; border-radius: 8px;
+    padding: 10px 16px; font-size: 0.78rem; color: #744210;
+    margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
+  }
+  .upload-section {
+    background: white; border-radius: 12px; padding: 24px;
+    margin-bottom: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border: 2px dashed #bee3f8;
+  }
+  .upload-section h2 { font-size: 1rem; color: #2b6cb0; margin-bottom: 8px; }
+  .upload-section p  { font-size: 0.82rem; color: #718096; margin-bottom: 16px; }
+  .upload-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .upload-btn {
+    background: #2b6cb0; color: white; border: none;
+    padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    font-size: 0.88rem; font-weight: 500; transition: background 0.2s;
+  }
+  .upload-btn:hover { background: #1a365d; }
+  .file-status       { font-size: 0.82rem; color: #48bb78; font-weight: 500; }
+  .file-status.error { color: #e53e3e; }
+  .debug-toggle {
+    background: none; border: 1px solid #cbd5e0; border-radius: 6px;
+    padding: 4px 10px; font-size: 0.76rem; cursor: pointer; color: #718096;
+  }
+  .debug-toggle:hover { background: #f7fafc; }
+  .debug-panel {
+    background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+    padding: 12px 16px; font-size: 0.78rem; color: #4a5568;
+    margin-bottom: 16px; display: none; line-height: 1.8;
+  }
+  .debug-panel.visible { display: block; }
+  .control-group { display: flex; flex-direction: column; gap: 5px; }
+  .control-group label { font-size: 0.82rem; font-weight: 600; color: #4a5568; }
+  .control-group select, .control-group input[type="text"] {
+    padding: 8px 14px; border: 1.5px solid #cbd5e0; border-radius: 8px;
+    font-size: 0.88rem; color: #2d3748; background: white; min-width: 220px;
+  }
+  .control-group select:focus, .control-group input:focus { outline: none; border-color: #2b6cb0; }
+  .school-info-bar {
+    display: none; background: white; border-radius: 10px;
+    padding: 12px 20px; margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .school-info-bar.visible { display: flex; }
+  .school-name-label { font-weight: 700; font-size: 0.95rem; color: #1a365d; }
+  .uplift-pill {
+    background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8;
+    padding: 3px 12px; border-radius: 10px; font-size: 0.76rem; font-weight: 700;
+  }
+  .non-uplift-pill {
+    background: #f7fafc; color: #718096; border: 1px solid #e2e8f0;
+    padding: 3px 12px; border-radius: 10px; font-size: 0.76rem; font-weight: 600;
+  }
+  .back-btn {
+    background: none; border: 1.5px solid #cbd5e0; border-radius: 8px;
+    padding: 6px 14px; font-size: 0.82rem; cursor: pointer; color: #4a5568;
+    font-weight: 500; transition: all 0.2s;
+  }
+  .back-btn:hover { border-color: #2b6cb0; color: #2b6cb0; }
+</style>
+
+<style>
+  .score-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 10px; font-size: 0.78rem; font-weight: 700;
+    border: 1.5px solid transparent;
+  }
+  .score-green { background: #f0fff4; color: #276749; border-color: #9ae6b4; }
+  .score-amber { background: #fffbeb; color: #c05621; border-color: #fbd38d; }
+  .score-red   { background: #fff5f5; color: #9b2c2c; border-color: #feb2b2; }
+  .traffic-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green   { background: #48bb78; }
+  .dot-amber   { background: #ed8936; }
+  .dot-red     { background: #fc8181; }
+
+  /* ── Charts ── */
+  .charts-row { display: none; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+  .charts-row.visible { display: flex; }
+  .chart-card {
+    background: white; border-radius: 12px; padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex: 1; min-width: 260px; max-width: 360px;
+  }
+  .chart-card h4 { font-size: 0.88rem; font-weight: 700; color: #2d3748; margin-bottom: 4px; }
+  .chart-card p.chart-sub { font-size: 0.76rem; color: #718096; margin-bottom: 16px; }
+  .chart-canvas-wrap {
+    position: relative; height: 180px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chart-legend { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .legend-item  { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: #4a5568; }
+  .legend-dot   { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val   { margin-left: auto; font-weight: 700; color: #2d3748; }
+
+  /* ── Overview summary charts row ── */
+  .overview-charts-row {
+    display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .overview-chart-card {
+    background: white; border-radius: 12px; padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex: 1; min-width: 240px; max-width: 340px;
+  }
+  .overview-chart-card h4 { font-size: 0.88rem; font-weight: 700; color: #2d3748; margin-bottom: 4px; }
+  .overview-chart-card p.chart-sub { font-size: 0.76rem; color: #718096; margin-bottom: 12px; }
+  .overview-chart-canvas-wrap {
+    position: relative; height: 160px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .overview-stat-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .overview-stat-center .stat-num   { font-size: 1.6rem; font-weight: 700; color: #2d3748; line-height: 1; }
+  .overview-stat-center .stat-label { font-size: 0.68rem; color: #718096; margin-top: 2px; }
+</style>
+
+<style>
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 18px; border: 1.5px solid #cbd5e0; border-radius: 8px;
+    background: white; font-size: 0.84rem; cursor: pointer;
+    color: #4a5568; font-weight: 500; transition: all 0.2s;
+  }
+  .tab-btn:hover  { border-color: #2b6cb0; color: #2b6cb0; }
+  .tab-btn.active { background: #2b6cb0; color: white; border-color: #2b6cb0; }
+  .tab-count {
+    display: inline-block; font-size: 0.72rem; padding: 1px 7px;
+    border-radius: 8px; margin-left: 4px; background: rgba(255,255,255,0.25);
+  }
+  .tab-btn:not(.active) .tab-count { background: #e2e8f0; color: #718096; }
+
+  .subtoggle-bar {
+    display: none; background: #f7fafc; border: 1px solid #e2e8f0;
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;
+    align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .subtoggle-bar.visible { display: flex; }
+  .subtoggle-label { font-size: 0.8rem; color: #718096; font-weight: 600; }
+  .subtoggle-btn {
+    padding: 5px 14px; border: 1.5px solid #cbd5e0; border-radius: 6px;
+    background: white; font-size: 0.8rem; cursor: pointer;
+    color: #4a5568; font-weight: 500; transition: all 0.2s;
+  }
+  .subtoggle-btn:hover  { border-color: #2b6cb0; color: #2b6cb0; }
+  .subtoggle-btn.active { background: #2b6cb0; color: white; border-color: #2b6cb0; }
+
+  .table-section {
+    background: white; border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
+  }
+  .table-header {
+    padding: 14px 20px; border-bottom: 1px solid #e2e8f0;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; background: #fafbfc;
+  }
+  .table-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .table-header h3   { font-size: 0.95rem; color: #2d3748; font-weight: 600; }
+  .count-badge {
+    background: #ebf8ff; color: #2b6cb0; font-size: 0.78rem;
+    padding: 3px 10px; border-radius: 10px; font-weight: 600;
+  }
+  .clear-col-filters-btn {
+    background: none; border: 1px solid #fed7d7; border-radius: 6px;
+    padding: 4px 10px; font-size: 0.76rem; cursor: pointer;
+    color: #e53e3e; display: none;
+  }
+  .clear-col-filters-btn.visible { display: inline-block; }
+  .clear-col-filters-btn:hover   { background: #fff5f5; }
+
+  .export-btn {
+    background: #2b6cb0; color: white; border: none; border-radius: 8px;
+    padding: 7px 14px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .export-btn:hover { background: #1a365d; }
+
+  .table-wrapper {
+    overflow-x: auto; overflow-y: auto;
+    max-height: calc(100vh - 340px); min-height: 200px;
+  }
+  table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  thead th {
+    background: #f7fafc; padding: 0; text-align: left;
+    font-weight: 600; color: #4a5568; border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap; position: sticky; top: 0; z-index: 2;
+  }
+  .th-label {
+    display: flex; align-items: center; gap: 5px;
+    padding: 10px 14px 5px 14px; cursor: pointer;
+    user-select: none; transition: background 0.15s;
+  }
+  .th-label:hover { background: #edf2f7; }
+  .sort-icon { font-size: 0.68rem; color: #a0aec0; flex-shrink: 0; }
+  thead th.sort-asc .sort-icon  { color: #2b6cb0; }
+  thead th.sort-desc .sort-icon { color: #2b6cb0; }
+
+  .th-tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .th-tooltip-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #cbd5e0; color: #4a5568; font-size: 0.62rem;
+    font-weight: 700; cursor: help; margin-left: 3px; flex-shrink: 0;
+  }
+  .th-tooltip-icon:hover + .th-tooltip-box { display: block; }
+  .th-tooltip-box {
+    display: none; position: absolute; top: 100%; left: 50%;
+    transform: translateX(-50%); z-index: 100;
+    background: #2d3748; color: white; font-size: 0.74rem;
+    padding: 7px 10px; border-radius: 6px; width: 220px;
+    line-height: 1.5; font-weight: 400; pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin-top: 4px;
+  }
+  .th-tooltip-box::before {
+    content: ''; position: absolute; bottom: 100%; left: 50%;
+    transform: translateX(-50%); border: 5px solid transparent;
+    border-bottom-color: #2d3748;
+  }
+  .th-filter-wrap { padding: 0 8px 6px 8px; }
+  .th-filter-select {
+    display: block; width: 100%; padding: 3px 4px;
+    border: 1px solid #cbd5e0; border-radius: 4px;
+    font-size: 0.72rem; color: #2d3748; background: white; cursor: pointer;
+  }
+  .th-filter-select:focus     { outline: none; border-color: #2b6cb0; }
+  .th-filter-select.has-value { border-color: #2b6cb0; background: #ebf8ff; }
+  .th-filter-input {
+    display: block; width: 100%; padding: 3px 6px;
+    border: 1px solid #cbd5e0; border-radius: 4px;
+    font-size: 0.72rem; color: #2d3748; background: white;
+  }
+  .th-filter-input:focus     { outline: none; border-color: #2b6cb0; }
+  .th-filter-input.has-value { border-color: #2b6cb0; background: #ebf8ff; }
+
+  tbody tr { border-bottom: 1px solid #f0f4f8; transition: background 0.15s; }
+  tbody tr:hover { background: #ebf8ff; }
+  tbody td { padding: 9px 14px; white-space: nowrap; color: #2d3748; }
+  tbody td:first-child { font-weight: 500; }
+
+  .overview-table tbody tr { cursor: pointer; }
+  .overview-school-link { color: #2b6cb0; font-weight: 600; text-decoration: underline; }
+  .cell-red   { color: #9b2c2c !important; font-weight: 700 !important; background: #fff5f5; }
+  .cell-green { color: #276749 !important; font-weight: 700 !important; background: #f0fff4; }
+
+  .pill     { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.74rem; font-weight: 600; }
+  .pill-yes { background: #c6f6d5; color: #276749; }
+  .pill-no  { background: #fed7d7; color: #9b2c2c; }
+  .pill-na  { background: #e2e8f0; color: #718096; }
+
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-top: 1px solid #e2e8f0;
+    flex-wrap: wrap; gap: 10px; background: #fafbfc;
+  }
+  .pagination-info { font-size: 0.8rem; color: #718096; }
+  .pagination-controls { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .page-btn {
+    padding: 5px 11px; border: 1.5px solid #cbd5e0; border-radius: 6px;
+    background: white; font-size: 0.8rem; cursor: pointer; color: #4a5568;
+    transition: all 0.15s; min-width: 34px; text-align: center;
+  }
+  .page-btn:hover:not(:disabled) { border-color: #2b6cb0; color: #2b6cb0; }
+  .page-btn.active   { background: #2b6cb0; color: white; border-color: #2b6cb0; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .rows-select {
+    padding: 5px 8px; border: 1.5px solid #cbd5e0; border-radius: 6px;
+    font-size: 0.8rem; color: #4a5568; cursor: pointer;
+  }
+  .empty-state       { text-align: center; padding: 60px 20px; color: #a0aec0; }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p     { font-size: 0.9rem; }
+
+  @media (max-width: 600px) {
+    .main { padding: 16px; }
+    .header { padding: 16px; }
+    .nav-bar { padding: 0 16px; }
+    .overview-chart-card { max-width: 100%; }
+    .chart-card { max-width: 100%; }
+  }
+</style>
+</head>
+<!-- ===== END OF PART 1 ===== -->
+<body>
+
+<!-- Shows script errors on the upload status line instead of failing silently -->
+<script>
+  window.addEventListener('error', function (e) {
+    var s = document.getElementById('fileStatus');
+    if (s) { s.textContent = '✗ Script error: ' + e.message; s.className = 'file-status error'; }
+  });
+</script>
+
+<div class="header">
+  <div>
+    <h1>Uplift 2.0 Schools Dashboard</h1>
+    <p>Internal Use Only</p>
+  </div>
+  <span class="badge">SENSITIVE NORMAL</span>
+</div>
+
+<div class="nav-bar" id="navBar" style="display:none">
+  <button class="nav-btn active" onclick="showPage('overview')">📊 School Overview</button>
+  <button class="nav-btn" onclick="showPage('detail')">🏫 School Detail</button>
+</div>
+
+<!-- ── UPLOAD PAGE ── -->
+<div class="page active" id="pageUpload">
+  <div class="main">
+    <div class="privacy-notice">
+      ⚠️ <strong>Data Privacy:</strong> All data is processed locally in your browser. No data is uploaded to any server or transmitted externally.
+    </div>
+    <div class="upload-section">
+      <h2>📂 Upload Excel File</h2>
+      <p>Upload your Excel workbook containing: <strong>Uplift List</strong>, <strong>SMT List</strong>, <strong>Familial Risk_2026</strong>, <strong>School List</strong>, <strong>Budget</strong>, <strong>Manpower</strong>, <strong>After School (Pri)</strong>, <strong>After School (Sec)</strong>, and <strong>Consultancy</strong>.</p>
+      <div class="upload-row">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose Excel File (.xlsx)</button>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFile(event)">
+        <span class="file-status" id="fileStatus">No file loaded</span>
+        <button class="debug-toggle" id="debugToggle" style="display:none" onclick="toggleDebug()">Show diagnostics</button>
+      </div>
+    </div>
+    <div class="debug-panel" id="debugPanel"></div>
+  </div>
+</div>
+
+<!-- ── OVERVIEW PAGE ── -->
+<div class="page" id="pageOverview">
+  <div class="main">
+
+    <div class="overview-charts-row" id="overviewChartsRow" style="display:none">
+
+      <div class="overview-chart-card">
+        <h4>Consultancy Visits</h4>
+        <p class="chart-sub">Schools visited vs not yet visited</p>
+        <div class="overview-chart-canvas-wrap">
+          <canvas id="ovChartVisit"></canvas>
+          <div class="overview-stat-center" id="ovVisitStat">
+            <div class="stat-num" id="ovVisitNum">—</div>
+            <div class="stat-label">visited</div>
+          </div>
+        </div>
+        <div class="chart-legend" id="ovLegendVisit"></div>
+      </div>
+
+      <div class="overview-chart-card">
+        <h4>School Needs Status</h4>
+        <p class="chart-sub">Distribution of Red / Amber / Green schools</p>
+        <div class="overview-chart-canvas-wrap">
+          <canvas id="ovChartTraffic"></canvas>
+          <div class="overview-stat-center">
+            <div class="stat-num" id="ovTotalSchools">—</div>
+            <div class="stat-label">schools</div>
+          </div>
+        </div>
+        <div class="chart-legend" id="ovLegendTraffic"></div>
+      </div>
+
+      <div class="overview-chart-card">
+        <h4>Uplift Students Identified in SMT</h4>
+        <p class="chart-sub">Distribution of schools by % identified</p>
+        <div class="overview-chart-canvas-wrap">
+          <canvas id="ovChartIdent"></canvas>
+          <div class="overview-stat-center">
+            <div class="stat-num" id="ovIdentAvg">—</div>
+            <div class="stat-label">avg % identified</div>
+          </div>
+        </div>
+        <div class="chart-legend" id="ovLegendIdent"></div>
+      </div>
+
+    </div>
+
+    <!-- Overview table -->
+    <div class="table-section">
+      <div class="table-header">
+        <div class="table-header-left">
+          <h3>School Overview — Uplift 2.0 Schools</h3>
+          <span class="count-badge" id="overviewCount">0 schools</span>
+          <button class="clear-col-filters-btn" id="clearOvFiltersBtn" onclick="clearOverviewFilters()">✕ Clear filters</button>
+        </div>
+        <button class="export-btn" onclick="exportOverviewExcel()">⬇ Download Excel</button>
+      </div>
+      <div class="table-wrapper">
+        <div id="overviewTableContainer">
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>Upload a file to view the overview.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── DETAIL PAGE ── -->
+<div class="page" id="pageDetail">
+  <div class="main">
+
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+      <button class="back-btn" onclick="showPage('overview')">← Back to Overview</button>
+      <div class="control-group" style="margin-bottom:0">
+        <select id="detailSchoolSelect" onchange="onDetailSchoolChange()">
+          <option value="">— Select a School —</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="school-info-bar" id="schoolInfoBar">
+      <span class="school-name-label" id="schoolInfoName"></span>
+      <span id="schoolInfoPill"></span>
+      <span id="schoolScoreBadge"></span>
+    </div>
+
+    <div class="charts-row" id="chartsRow">
+      <div class="chart-card">
+        <h4>SMT — FAS Status</h4>
+        <p class="chart-sub">Students on MOE FAS or School-based FAS (SMT List)</p>
+        <div class="chart-canvas-wrap"><canvas id="chartFAS"></canvas></div>
+        <div class="chart-legend" id="legendFAS"></div>
+      </div>
+      <div class="chart-card">
+        <h4>Uplift — Identified in SMT</h4>
+        <p class="chart-sub">Uplift students identified via SMT process (Uplift List)</p>
+        <div class="chart-canvas-wrap"><canvas id="chartSMT"></canvas></div>
+        <div class="chart-legend" id="legendSMT"></div>
+      </div>
+      <div class="chart-card">
+        <h4>Budget Utilisation</h4>
+        <p class="chart-sub">Proportion of budget utilised (Budget sheet)</p>
+        <div class="chart-canvas-wrap"><canvas id="chartBudget"></canvas></div>
+        <div class="chart-legend" id="legendBudget"></div>
+      </div>
+    </div>
+
+    <div class="tabs" id="detailTabs" style="display:none">
+      <button class="tab-btn active" onclick="switchTab('uplift')">Uplift List <span class="tab-count" id="tc-uplift">0</span></button>
+      <button class="tab-btn" onclick="switchTab('smt')">SMT List <span class="tab-count" id="tc-smt">0</span></button>
+      <button class="tab-btn" onclick="switchTab('familial')">Familial Risk 2026 <span class="tab-count" id="tc-familial">0</span></button>
+      <button class="tab-btn" onclick="switchTab('afterschool')">After-School Support <span class="tab-count" id="tc-afterschool">0</span></button>
+    </div>
+
+    <div class="subtoggle-bar" id="afterschoolSubtoggle">
+      <span class="subtoggle-label">Showing:</span>
+      <button class="subtoggle-btn active" id="subtoggle-pri" onclick="switchAfterSchool('pri')">Primary</button>
+      <button class="subtoggle-btn" id="subtoggle-sec" onclick="switchAfterSchool('sec')">Secondary</button>
+    </div>
+
+    <div class="table-section" id="detailTableSection" style="display:none">
+      <div class="table-header">
+        <div class="table-header-left">
+          <h3 id="tableTitle">Uplift List</h3>
+          <span class="count-badge" id="rowCount">0 records</span>
+          <button class="clear-col-filters-btn" id="clearColFiltersBtn" onclick="clearColFilters()">✕ Clear column filters</button>
+        </div>
+        <button class="export-btn" onclick="exportDetailExcel()">⬇ Download Excel</button>
+      </div>
+      <div class="table-wrapper" id="tableWrapper">
+        <div id="tableContainer"></div>
+      </div>
+      <div class="pagination" id="paginationBar" style="display:none">
+        <span class="pagination-info" id="paginationInfo"></span>
+        <div class="pagination-controls" id="paginationControls"></div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:0.8rem;color:#718096">Rows per page:</span>
+          <select class="rows-select" id="rowsPerPage" onchange="onRowsPerPageChange()">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+            <option value="500">500</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- ===== END OF PART 2 ===== -->
+<script>
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let workbookData = {
+    uplift: [], smt: [], familial: [],
+    schools: [], budget: [], manpower: [],
+    afterschoolPri: [], afterschoolSec: [],
+    consultancy: []
+  };
+  let schoolNormMap = {};
+  let upliftNormSet = new Set();
+  let metricsCache  = {};      // per-school metrics, cleared on each file load
+
+  let currentTab          = 'uplift';
+  let currentAfterSchool  = 'pri';
+  let filteredData        = [];
+  let currentPage         = 1;
+  let rowsPerPage         = 100;
+  let currentDetailSchool = null;
+
+  let sortState = {
+    uplift: { col: null, dir: 'asc' }, smt: { col: null, dir: 'asc' },
+    familial: { col: null, dir: 'asc' }, afterschoolPri: { col: null, dir: 'asc' },
+    afterschoolSec: { col: null, dir: 'asc' }
+  };
+  let colFilters = {
+    uplift: {}, smt: {}, familial: {},
+    afterschoolPri: {}, afterschoolSec: {}
+  };
+  let colUniqueValues = {
+    uplift: {}, smt: {}, familial: {},
+    afterschoolPri: {}, afterschoolSec: {}
+  };
+
+  let colFilterTimers = {};
+
+  // Overview sort + last displayed rows (used by Excel export)
+  let ovSort           = { col: null, dir: 'asc' };
+  let lastOverviewRows = [];
+
+  // Chart instances — detail page
+  let chartFASInstance    = null;
+  let chartSMTInstance    = null;
+  let chartBudgetInstance = null;
+
+  // Chart instances — overview summary
+  let ovChartVisitInstance   = null;
+  let ovChartTrafficInstance = null;
+  let ovChartIdentInstance   = null;
+
+  let quartiles = {
+    upliftCount: [], rentalCount: [], comlinkCount: [],
+    budgetPct: [], identPct: [], fasPct: []
+  };
+
+  // Overview sort accessors (missing values return null and always sort last)
+  const OV_SORT = {
+    school:  s => s.display.toLowerCase(),
+    score:   s => s.score,
+    status:  s => ({ red: 0, amber: 1, green: 2 })[s.traffic],   // first click = highest need on top
+    uplift:  s => s.upliftCount,
+    rental:  s => s.rentalCount,
+    comlink: s => s.comlinkCount,
+    tqv:     s => s.tqvValue === '—' ? null : s.tqvValue.toLowerCase(),
+    budget:  s => s.budgetPct,
+    ident:   s => s.identPct,
+    fas:     s => s.fasPct,
+    consult: s => {
+      if (!s.consultDate) return null;
+      const n = Number(s.consultDate);
+      return !isNaN(n) ? n : (Date.parse(s.consultDate) || null);
+    }
+  };
+
+  // Columns hidden in detail tables
+  const HIDDEN_COLS = new Set(['school']);
+
+  // Columns that trigger the "include identifiers?" prompt on export
+  const IDENTIFIER_COLS = new Set(['name', 'nric']);
+
+  const FREE_TEXT_COLS = new Set([
+    'name', 'nric', 'presenting issue', 'other presenting issue(s)',
+    'other presenting issues', 'name of fsc', 'name of sso for comlink+',
+    'name of fsc for comlink+', 'sso nearest to student\'s residential address'
+  ]);
+
+  const COL_TOOLTIPS = {
+    '% identified in smt': 'Out of all Uplift students in this school, how many have been identified through the SMT process.',
+    '% on fas': 'Out of all students on the SMT list for this school, how many are on MOE FAS or School-based FAS.'
+  };
+
+  const SHEET_NAMES = {
+    uplift: 'Uplift List', smt: 'SMT List',
+    familial: 'Familial Risk_2026', schools: 'School List',
+    budget: 'Budget', manpower: 'Manpower',
+    afterschoolPri: 'After School (Pri)', afterschoolSec: 'After School (Sec)',
+    consultancy: 'Consultancy'
+  };
+
+  const YES_NO_FIELDS = new Set([
+    // uplift list
+    'identified in smt',
+    'on learning support or comlink+ (unidentified)',
+    'lpl-lsm', 'lpl-lsp', 'lpl-rrp', 'lpl-sdr', 'lpl-fel', 'lpl-fma',
+    'psle score ≥ 25',
+    'attendance (pre-lta or lta)',
+    'dropout (yes/no)',
+    'from non-intact family due to divorce (yes/no)',
+    'parent(s) on mandatory co-parenting programme (yes/no)',
+    'family is supported by fsc within the past 2 years (yes/no)',
+    'experienced or witnessed family violence (yes/no)',
+    'on public rental',
+    // smt / familial
+    'has familial risk', 'has attendance issue', 'has after-school support',
+    'living in public rental housing (yes/no)',
+    'family is supported by comlink+ (yes/no)',
+    'parents are divorced (yes/no)', 'significant familial risk factors',
+    'challenges in achieving learning proficiency',
+    'absenteeism issues', 're-integration from lta', 'enrolled in scc',
+    'moe fas status'
+  ]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function norm(val) { return String(val ?? '').trim().toLowerCase(); }
+
+  function findColKey(dataArray, targetNorm) {
+    if (!dataArray || dataArray.length === 0) return null;
+    return Object.keys(dataArray[0]).find(k => norm(k) === targetNorm) || null;
+  }
+
+  function findColKeyPartial(dataArray, partialNorm) {
+    if (!dataArray || dataArray.length === 0) return null;
+    return Object.keys(dataArray[0]).find(k => norm(k).includes(partialNorm)) || null;
+  }
+
+  function toTitleCase(str) {
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function escHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function fmtPct(val) {
+    if (val === null || val === undefined || val === '') return '—';
+    const n = parseFloat(val);
+    if (isNaN(n)) return '—';
+    return (n <= 1 ? n * 100 : n).toFixed(1) + '%';
+  }
+
+  function parsePct(val) {
+    if (val === null || val === undefined || val === '') return null;
+    const n = parseFloat(val);
+    if (isNaN(n)) return null;
+    return n <= 1 ? n * 100 : n;
+  }
+
+  function isFreeTextCol(colKey) { return FREE_TEXT_COLS.has(norm(colKey)); }
+  function isHiddenCol(colKey)   { return HIDDEN_COLS.has(norm(colKey)); }
+
+  // Normalise yes/no values — treat Y, N, YES, NO uniformly
+  function normYesNo(val) {
+    const v = norm(val);
+    if (v === 'y' || v === 'yes' || v === '1' || v === 'true')  return 'yes';
+    if (v === 'n' || v === 'no'  || v === '0' || v === 'false') return 'no';
+    return v;
+  }
+
+  function activeDataKey() {
+    if (currentTab === 'afterschool') {
+      return currentAfterSchool === 'pri' ? 'afterschoolPri' : 'afterschoolSec';
+    }
+    return currentTab;
+  }
+
+  // ── Quartile helpers ──────────────────────────────────────────────────────
+  function calcQuartiles(values) {
+    const sorted = [...values].filter(v => v !== null).sort((a, b) => a - b);
+    if (sorted.length === 0) return [null, null, null];
+    return [
+      sorted[Math.floor(sorted.length * 0.25)],
+      sorted[Math.floor(sorted.length * 0.50)],
+      sorted[Math.floor(sorted.length * 0.75)]
+    ];
+  }
+
+  function getQuartileLabel(value, q) {
+    if (value === null || q[0] === null) return null;
+    if (value <= q[0]) return 'q1';
+    if (value <= q[1]) return 'q2';
+    if (value <= q[2]) return 'q3';
+    return 'q4';
+  }
+
+  function buildAllQuartiles() {
+    const keys    = Object.entries(schoolNormMap).filter(([, v]) => v.isUplift).map(([n]) => n);
+    const metrics = keys.map(n => getSchoolMetrics(n));
+    quartiles.upliftCount  = calcQuartiles(metrics.map(m => m.upliftCount));
+    quartiles.rentalCount  = calcQuartiles(metrics.map(m => m.rentalCount));
+    quartiles.comlinkCount = calcQuartiles(metrics.map(m => m.comlinkCount));
+    quartiles.budgetPct    = calcQuartiles(metrics.map(m => m.budgetPct));
+    quartiles.identPct     = calcQuartiles(metrics.map(m => m.identPct));
+    quartiles.fasPct       = calcQuartiles(metrics.map(m => m.fasPct));
+  }
+
+  // ── Scoring ───────────────────────────────────────────────────────────────
+  function calcScore(metrics) {
+    let score = 0;
+    if (getQuartileLabel(metrics.upliftCount, quartiles.upliftCount) === 'q4') score++;
+    if (metrics.budgetPct !== null && getQuartileLabel(metrics.budgetPct, quartiles.budgetPct) === 'q1') score++;
+    if (metrics.identPct  !== null && getQuartileLabel(metrics.identPct,  quartiles.identPct)  === 'q1') score++;
+    if (metrics.fasPct    !== null && getQuartileLabel(metrics.fasPct,    quartiles.fasPct)    === 'q1') score++;
+    return score;
+  }
+
+  function scoreToTraffic(score) {
+    if (score >= 3) return 'red';
+    if (score === 2) return 'amber';
+    return 'green';
+  }
+
+  function trafficBadgeHtml(score) {
+    const light  = scoreToTraffic(score);
+    const dotCls = `dot-${light}`;
+    const bdgCls = `score-${light}`;
+    const label  = light === 'red' ? '🔴 High Needs' : light === 'amber' ? '🟡 Moderate' : '🟢 On Track';
+    return `<span class="score-badge ${bdgCls}"><span class="traffic-dot ${dotCls}"></span>${label} — Score: ${score}/4</span>`;
+  }
+
+  // ── Page navigation ───────────────────────────────────────────────────────
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', ['overview','detail'][i] === pageId);
+    });
+    document.getElementById('page' + pageId.charAt(0).toUpperCase() + pageId.slice(1)).classList.add('active');
+  }
+
+  function toggleDebug() {
+    const panel = document.getElementById('debugPanel');
+    const btn   = document.getElementById('debugToggle');
+    btn.textContent = panel.classList.toggle('visible') ? 'Hide diagnostics' : 'Show diagnostics';
+  }
+
+  // ── File loading ──────────────────────────────────────────────────────────
+
+  // Shrink a sheet's declared range to the cells that actually hold data.
+  // Excel files often declare ~1,000,000 rows because of stray formatting,
+  // which makes sheet_to_json build a million empty rows and freeze the page.
+  function trimSheetRange(ws) {
+    if (!ws['!ref']) return;
+    const orig = XLSX.utils.decode_range(ws['!ref']);
+    let maxR = -1, maxC = -1;
+    for (const k in ws) {
+      if (k[0] === '!') continue;
+      const c = ws[k];
+      if (c && c.v !== undefined && c.v !== null && String(c.v).trim() !== '') {
+        const a = XLSX.utils.decode_cell(k);
+        if (a.r > maxR) maxR = a.r;
+        if (a.c > maxC) maxC = a.c;
+      }
+    }
+    if (maxR < 0) { ws['!ref'] = 'A1'; return; }
+    ws['!ref'] = XLSX.utils.encode_range({
+      s: orig.s,
+      e: { r: Math.min(orig.e.r, maxR), c: Math.min(orig.e.c, maxC) }
+    });
+  }
+
+  function handleFile(event) {
+    const file = event.target.files[0];
+    event.target.value = '';            // allows re-picking the same file
+    if (!file) return;
+
+    const statusEl = document.getElementById('fileStatus');
+    if (typeof XLSX === 'undefined') {
+      statusEl.textContent = '✗ Excel library did not load (CDN blocked?).';
+      statusEl.className   = 'file-status error';
+      return;
+    }
+    statusEl.textContent = 'Reading file…';
+    statusEl.className   = 'file-status';
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      statusEl.textContent = '✗ Could not read the file.';
+      statusEl.className   = 'file-status error';
+    };
+    reader.onload = function (e) {
+      statusEl.textContent = 'Parsing workbook… (large files can take a while)';
+      setTimeout(() => {
+        try {
+          const t0          = performance.now();
+          const wb          = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const foundSheets = wb.SheetNames;
+          let debugHtml     = `<strong>Sheets found:</strong> ${foundSheets.map(s => `"${s}"`).join(', ')}<br><br>`;
+
+          for (const [key, sheetName] of Object.entries(SHEET_NAMES)) {
+            const matched = foundSheets.find(s => s === sheetName)
+                         || foundSheets.find(s => norm(s) === norm(sheetName));
+            if (!matched) {
+              workbookData[key] = [];
+              debugHtml += `<strong>⚠️ "${sheetName}"</strong> not found in workbook.<br>`;
+              continue;
+            }
+
+            const ws       = wb.Sheets[matched];
+            const declared = ws['!ref'] || '(none)';
+            trimSheetRange(ws);
+            workbookData[key] = XLSX.utils.sheet_to_json(ws, { defval: '' })
+              .filter(r => Object.values(r).some(v => String(v).trim() !== ''));
+
+            const skipDetail = ['schools','budget','manpower','consultancy'].includes(key);
+            debugHtml += `<strong>${sheetName}:</strong> ${workbookData[key].length.toLocaleString()} rows `
+                       + `<span style="color:#a0aec0">(declared ${declared}, used ${ws['!ref']})</span>. `;
+            if (!skipDetail && workbookData[key].length > 0) {
+              const sc      = findColKey(workbookData[key], 'school');
+              const samples = sc
+                ? [...new Set(workbookData[key].map(r => String(r[sc] ?? '').trim()).filter(Boolean))].slice(0, 4)
+                : [];
+              debugHtml += sc
+                ? `School col: "${sc}". Samples: ${samples.map(s => `"${s}"`).join(', ')}<br>`
+                : `⚠️ No School column found.<br>`;
+            } else {
+              const cols = workbookData[key].length > 0 ? Object.keys(workbookData[key][0]).join(', ') : 'empty';
+              debugHtml += `Columns: ${cols}<br>`;
+            }
+          }
+
+          metricsCache = {};
+          buildSchoolNormMap();
+          buildAllQuartiles();
+          populateDetailDropdown();
+
+          debugHtml += `<br>Loaded in ${Math.round(performance.now() - t0)} ms.`;
+          document.getElementById('debugPanel').innerHTML = debugHtml;
+
+          statusEl.textContent = `✓ Loaded: ${file.name}`;
+          statusEl.className   = 'file-status';
+          document.getElementById('debugToggle').style.display = 'inline-block';
+          document.getElementById('navBar').style.display      = 'flex';
+          showPage('overview');
+          renderOverviewCharts();
+          renderOverviewTable();
+
+        } catch (err) {
+          statusEl.textContent = '✗ Error: ' + err.message;
+          statusEl.className   = 'file-status error';
+          console.error(err);
+        }
+      }, 50);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ── School map ────────────────────────────────────────────────────────────
+  function buildSchoolNormMap() {
+    schoolNormMap = {};
+    upliftNormSet = new Set();
+
+    const slCol = findColKey(workbookData.schools, 'school');
+    if (slCol) {
+      workbookData.schools.forEach(r => {
+        const v = String(r[slCol] ?? '').trim();
+        if (!v) return;
+        const n = norm(v);
+        upliftNormSet.add(n);
+        schoolNormMap[n] = { display: v, isUplift: true };
+      });
+    }
+
+    ['uplift','smt','familial','afterschoolPri','afterschoolSec'].forEach(key => {
+      const col = findColKey(workbookData[key], 'school');
+      if (!col) return;
+      workbookData[key].forEach(r => {
+        const v = String(r[col] ?? '').trim();
+        if (!v) return;
+        const n = norm(v);
+        if (!schoolNormMap[n]) schoolNormMap[n] = { display: toTitleCase(v), isUplift: false };
+      });
+    });
+  }
+
+  // ── Detail dropdown ───────────────────────────────────────────────────────
+  function populateDetailDropdown() {
+    const select = document.getElementById('detailSchoolSelect');
+    select.innerHTML = '<option value="">— Select a School —</option>';
+
+    const upliftSchools = Object.entries(schoolNormMap)
+      .filter(([, v]) => v.isUplift)
+      .sort((a, b) => a[1].display.localeCompare(b[1].display));
+    const otherSchools  = Object.entries(schoolNormMap)
+      .filter(([, v]) => !v.isUplift)
+      .sort((a, b) => a[1].display.localeCompare(b[1].display));
+
+    if (upliftSchools.length > 0) {
+      const grp = document.createElement('optgroup');
+      grp.label = '⭐ Uplift 2.0 Schools';
+      upliftSchools.forEach(([n, v]) => {
+        const opt = document.createElement('option');
+        opt.value = n; opt.textContent = v.display;
+        grp.appendChild(opt);
+      });
+      select.appendChild(grp);
+    }
+    if (otherSchools.length > 0) {
+      const grp = document.createElement('optgroup');
+      grp.label = 'Other Schools';
+      otherSchools.forEach(([n, v]) => {
+        const opt = document.createElement('option');
+        opt.value = n; opt.textContent = v.display;
+        grp.appendChild(opt);
+      });
+      select.appendChild(grp);
+    }
+  }
+
+  // <!-- ===== END OF PART 3 (script still open) ===== -->
+
+  // ── School metrics (cached) ───────────────────────────────────────────────
+  function getSchoolMetrics(normKey) {
+    return metricsCache[normKey] || (metricsCache[normKey] = computeSchoolMetrics(normKey));
+  }
+
+  function computeSchoolMetrics(normKey) {
+    const info = schoolNormMap[normKey];
+    if (!info) return {
+      display: normKey, isUplift: false,
+      upliftCount: 0, rentalCount: 0, comlinkCount: 0,
+      tqvValue: '—', budgetPct: null, identPct: null, fasPct: null, consultDate: null
+    };
+
+    // 1. Uplift students
+    const upliftSchoolCol = findColKey(workbookData.uplift, 'school');
+    const upliftRows      = upliftSchoolCol
+      ? workbookData.uplift.filter(r => norm(r[upliftSchoolCol]) === normKey) : [];
+    const upliftCount     = upliftRows.length;
+
+    // 2. Rental students
+    const famSchoolCol = findColKey(workbookData.familial, 'school');
+    const rentalCol    = findColKeyPartial(workbookData.familial, 'living in public rental');
+    const rentalCount  = (famSchoolCol && rentalCol)
+      ? workbookData.familial.filter(r =>
+          norm(r[famSchoolCol]) === normKey &&
+          normYesNo(r[rentalCol]) === 'yes').length : 0;
+
+    // 3. ComLink+ students
+    const comlinkCol   = findColKeyPartial(workbookData.familial, 'family is supported by comlink+');
+    const comlinkCount = (famSchoolCol && comlinkCol)
+      ? workbookData.familial.filter(r =>
+          norm(r[famSchoolCol]) === normKey &&
+          normYesNo(r[comlinkCol]) === 'yes').length : 0;
+
+    // 4. TQV
+    const mpSchoolCol = findColKey(workbookData.manpower, 'school');
+    const tqvCol      = findColKeyPartial(workbookData.manpower, 'tqv');
+    let tqvValue      = '—';
+    if (mpSchoolCol && tqvCol) {
+      const mpRow = workbookData.manpower.find(r => norm(r[mpSchoolCol]) === normKey);
+      if (mpRow) tqvValue = String(mpRow[tqvCol] ?? '').trim() || '—';
+    }
+
+    // 5. Budget utilisation
+    const budgetSchoolCol = findColKey(workbookData.budget, 'school name')
+                         || findColKey(workbookData.budget, 'school');
+    const propCol         = findColKeyPartial(workbookData.budget, 'proportion utilised')
+                         || findColKeyPartial(workbookData.budget, 'proportion utilized');
+    let budgetPct         = null;
+    if (budgetSchoolCol && propCol) {
+      const budgetRow = workbookData.budget.find(r => norm(r[budgetSchoolCol]) === normKey);
+      if (budgetRow) budgetPct = parsePct(budgetRow[propCol]);
+    }
+
+    // 6. % Identified in SMT
+    const identCol   = findColKeyPartial(workbookData.uplift, 'identified in smt');
+    const identCount = identCol
+      ? upliftRows.filter(r => normYesNo(r[identCol]) === 'yes').length : 0;
+    const identPct   = upliftRows.length > 0
+      ? (identCount / upliftRows.length) * 100 : null;
+
+    // 7. % on FAS
+    const smtSchoolCol = findColKey(workbookData.smt, 'school');
+    const moeFasCol    = findColKey(workbookData.smt, 'moe fas');
+    const schoolFasCol = findColKey(workbookData.smt, 'school-based fas');
+    const smtRows      = smtSchoolCol
+      ? workbookData.smt.filter(r => norm(r[smtSchoolCol]) === normKey) : [];
+    const fasCount     = smtRows.filter(r => {
+      const moe    = moeFasCol    ? normYesNo(r[moeFasCol])    : '';
+      const school = schoolFasCol ? normYesNo(r[schoolFasCol]) : '';
+      return moe === 'yes' || school === 'yes';
+    }).length;
+    const fasPct = smtRows.length > 0
+      ? (fasCount / smtRows.length) * 100 : null;
+
+    // 8. Consultancy date
+    const consultSchoolCol = findColKey(workbookData.consultancy, 'school');
+    const consultDateCol   = findColKey(workbookData.consultancy, 'date');
+    let consultDate        = null;
+    if (consultSchoolCol && consultDateCol) {
+      const consultRow = workbookData.consultancy.find(r => norm(r[consultSchoolCol]) === normKey);
+      if (consultRow) {
+        const raw = String(consultRow[consultDateCol] ?? '').trim();
+        if (raw) consultDate = raw;
+      }
+    }
+
+    return {
+      display: info.display, isUplift: info.isUplift,
+      upliftCount, rentalCount, comlinkCount,
+      tqvValue, budgetPct, identPct, fasPct, consultDate
+    };
+  }
+
+  // ── Shared quartile filter ────────────────────────────────────────────────
+  function applyQFilter(arr, filterVal, metricKey, qKey) {
+    if (!filterVal) return arr;
+    return arr.filter(s => {
+      if (filterVal === 'none' || filterVal === 'No data') return s[metricKey] === null;
+      const ql  = getQuartileLabel(s[metricKey], quartiles[qKey]);
+      const map = { q1: 'Low (Q1)', q2: 'Mid-Low (Q2)', q3: 'Mid-High (Q3)', q4: 'High (Q4)' };
+      return map[ql] === filterVal;
+    });
+  }
+
+  // ── Overview summary charts ───────────────────────────────────────────────
+  function renderOverviewCharts() {
+    if (typeof Chart === 'undefined') return;   // Chart.js blocked: skip charts, keep the table
+
+    const keys    = Object.entries(schoolNormMap).filter(([, v]) => v.isUplift).map(([n]) => n);
+    const metrics = keys.map(n => {
+      const m     = getSchoolMetrics(n);
+      const score = calcScore(m);
+      return { ...m, score, traffic: scoreToTraffic(score) };
+    });
+
+    if (metrics.length === 0) return;
+    document.getElementById('overviewChartsRow').style.display = 'flex';
+
+    const total = metrics.length;
+
+    // ── Chart 1: Consultancy visits ──
+    const visited    = metrics.filter(m => m.consultDate !== null).length;
+    const notVisited = total - visited;
+
+    if (ovChartVisitInstance) { ovChartVisitInstance.destroy(); ovChartVisitInstance = null; }
+    const ctxV = document.getElementById('ovChartVisit').getContext('2d');
+    ovChartVisitInstance = new Chart(ctxV, {
+      type: 'doughnut',
+      data: {
+        labels: ['Visited', 'Not Yet Visited'],
+        datasets: [{ data: [visited, notVisited], backgroundColor: ['#48bb78','#fed7d7'], borderWidth: 2, borderColor: ['#276749','#fc8181'] }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}` } } }
+      }
+    });
+    document.getElementById('ovVisitNum').textContent = visited;
+    document.getElementById('ovLegendVisit').innerHTML = `
+      <div class="legend-item"><span class="legend-dot" style="background:#48bb78"></span><span>Visited</span><span class="legend-val">${visited}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#fed7d7"></span><span>Not Yet Visited</span><span class="legend-val">${notVisited}</span></div>`;
+
+    // ── Chart 2: Traffic light distribution ──
+    const redCount   = metrics.filter(m => m.traffic === 'red').length;
+    const amberCount = metrics.filter(m => m.traffic === 'amber').length;
+    const greenCount = metrics.filter(m => m.traffic === 'green').length;
+
+    if (ovChartTrafficInstance) { ovChartTrafficInstance.destroy(); ovChartTrafficInstance = null; }
+    const ctxT = document.getElementById('ovChartTraffic').getContext('2d');
+    ovChartTrafficInstance = new Chart(ctxT, {
+      type: 'doughnut',
+      data: {
+        labels: ['🔴 High Needs', '🟡 Moderate', '🟢 On Track'],
+        datasets: [{ data: [redCount, amberCount, greenCount], backgroundColor: ['#fc8181','#ed8936','#48bb78'], borderWidth: 2, borderColor: ['#9b2c2c','#c05621','#276749'] }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed}` } } }
+      }
+    });
+    document.getElementById('ovTotalSchools').textContent = total;
+    document.getElementById('ovLegendTraffic').innerHTML = `
+      <div class="legend-item"><span class="legend-dot" style="background:#fc8181"></span><span>🔴 High Needs</span><span class="legend-val">${redCount}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ed8936"></span><span>🟡 Moderate</span><span class="legend-val">${amberCount}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#48bb78"></span><span>🟢 On Track</span><span class="legend-val">${greenCount}</span></div>`;
+
+    // ── Chart 3: % Identified in SMT distribution ──
+    const identMetrics = metrics.filter(m => m.identPct !== null);
+    const avgIdent     = identMetrics.length > 0
+      ? identMetrics.reduce((s, m) => s + m.identPct, 0) / identMetrics.length : null;
+
+    const q = calcQuartiles(identMetrics.map(m => m.identPct));
+    const identQ1 = identMetrics.filter(m => getQuartileLabel(m.identPct, q) === 'q1').length;
+    const identQ2 = identMetrics.filter(m => getQuartileLabel(m.identPct, q) === 'q2').length;
+    const identQ3 = identMetrics.filter(m => getQuartileLabel(m.identPct, q) === 'q3').length;
+    const identQ4 = identMetrics.filter(m => getQuartileLabel(m.identPct, q) === 'q4').length;
+    const noIdent = total - identMetrics.length;
+
+    if (ovChartIdentInstance) { ovChartIdentInstance.destroy(); ovChartIdentInstance = null; }
+    const ctxI = document.getElementById('ovChartIdent').getContext('2d');
+    ovChartIdentInstance = new Chart(ctxI, {
+      type: 'doughnut',
+      data: {
+        labels: ['Low (Q1)', 'Mid-Low (Q2)', 'Mid-High (Q3)', 'High (Q4)', 'No data'],
+        datasets: [{ data: [identQ1, identQ2, identQ3, identQ4, noIdent], backgroundColor: ['#fc8181','#ed8936','#68d391','#48bb78','#e2e8f0'], borderWidth: 2, borderColor: ['#9b2c2c','#c05621','#276749','#22543d','#cbd5e0'] }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '68%',
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} schools` } } }
+      }
+    });
+    document.getElementById('ovIdentAvg').textContent = avgIdent !== null ? fmtPct(avgIdent) : '—';
+    document.getElementById('ovLegendIdent').innerHTML = `
+      <div class="legend-item"><span class="legend-dot" style="background:#fc8181"></span><span>Low (Q1)</span><span class="legend-val">${identQ1}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ed8936"></span><span>Mid-Low (Q2)</span><span class="legend-val">${identQ2}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#68d391"></span><span>Mid-High (Q3)</span><span class="legend-val">${identQ3}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#48bb78"></span><span>High (Q4)</span><span class="legend-val">${identQ4}</span></div>
+      ${noIdent > 0 ? `<div class="legend-item"><span class="legend-dot" style="background:#e2e8f0"></span><span>No data</span><span class="legend-val">${noIdent}</span></div>` : ''}`;
+  }
+
+  // ── Overview table ────────────────────────────────────────────────────────
+  function renderOverviewTable() {
+    const container = document.getElementById('overviewTableContainer');
+
+    function getInTable(id) {
+      const el = document.getElementById(id);
+      return el ? el.value : '';
+    }
+
+    const inTbl = {
+      school:  getInTable('inTableSchool'),
+      uplift:  getInTable('inTableUplift'),
+      rental:  getInTable('inTableRental'),
+      comlink: getInTable('inTableComlink'),
+      tqv:     getInTable('inTableTQV'),
+      budget:  getInTable('inTableBudget'),
+      ident:   getInTable('inTableIdent'),
+      fas:     getInTable('inTableFas'),
+      traffic: getInTable('inTableTraffic'),
+      score:   getInTable('inTableScore'),
+      consult: getInTable('inTableConsult')
+    };
+
+    let schools = Object.entries(schoolNormMap)
+      .filter(([, v]) => v.isUplift)
+      .map(([n]) => {
+        const m     = getSchoolMetrics(n);
+        const score = calcScore(m);
+        return { normKey: n, ...m, score, traffic: scoreToTraffic(score) };
+      });
+
+    schools.sort((a, b) => a.display.localeCompare(b.display));
+
+    // ── In-table filters ──
+    let displaySchools = [...schools];
+    if (inTbl.school)  displaySchools = displaySchools.filter(s => norm(s.display).includes(norm(inTbl.school)));
+    if (inTbl.tqv)     displaySchools = displaySchools.filter(s => s.tqvValue === inTbl.tqv);
+    if (inTbl.traffic) displaySchools = displaySchools.filter(s => s.traffic === inTbl.traffic);
+    if (inTbl.score)   displaySchools = displaySchools.filter(s => String(s.score) === inTbl.score);
+
+    if (inTbl.consult) {
+      displaySchools = displaySchools.filter(s => {
+        if (inTbl.consult === 'Visited')         return s.consultDate !== null;
+        if (inTbl.consult === 'Not Yet Visited') return s.consultDate === null;
+        return true;
+      });
+    }
+
+    if (inTbl.budget) {
+      displaySchools = displaySchools.filter(s => {
+        const pct = s.budgetPct;
+        if (inTbl.budget === 'No data')             return pct === null;
+        if (inTbl.budget === '0% (No utilisation)') return pct !== null && pct === 0;
+        const ql  = getQuartileLabel(pct, quartiles.budgetPct);
+        const map = { q1: 'Low (Q1)', q2: 'Mid-Low (Q2)', q3: 'Mid-High (Q3)', q4: 'High (Q4)' };
+        return map[ql] === inTbl.budget;
+      });
+    }
+
+    displaySchools = applyQFilter(displaySchools, inTbl.uplift,  'upliftCount',  'upliftCount');
+    displaySchools = applyQFilter(displaySchools, inTbl.rental,  'rentalCount',  'rentalCount');
+    displaySchools = applyQFilter(displaySchools, inTbl.comlink, 'comlinkCount', 'comlinkCount');
+    displaySchools = applyQFilter(displaySchools, inTbl.ident,   'identPct',     'identPct');
+    displaySchools = applyQFilter(displaySchools, inTbl.fas,     'fasPct',       'fasPct');
+
+    // ── Sort (missing values always go to the bottom) ──
+    if (ovSort.col) {
+      const f     = OV_SORT[ovSort.col];
+      const dir   = ovSort.dir === 'asc' ? 1 : -1;
+      const isNil = v => v === null || v === undefined;
+      displaySchools.sort((a, b) => {
+        const x = f(a), y = f(b);
+        if (isNil(x)) return isNil(y) ? 0 : 1;
+        if (isNil(y)) return -1;
+        return (typeof x === 'string' ? x.localeCompare(y) : x - y) * dir;
+      });
+    }
+
+    lastOverviewRows = displaySchools;
+
+    document.getElementById('overviewCount').textContent =
+      `${displaySchools.length} school${displaySchools.length !== 1 ? 's' : ''}`;
+    document.getElementById('clearOvFiltersBtn')
+      .classList.toggle('visible', Object.values(inTbl).some(Boolean));
+
+    // ── Dropdown options ──
+    const tqvVals      = [...new Set(schools.map(s => s.tqvValue).filter(v => v !== '—'))].sort();
+    const qLabels      = ['Low (Q1)', 'Mid-Low (Q2)', 'Mid-High (Q3)', 'High (Q4)', 'No data'];
+    const budgetOpts   = ['0% (No utilisation)', 'Low (Q1)', 'Mid-Low (Q2)', 'Mid-High (Q3)', 'High (Q4)', 'No data'];
+    const trafficOpts  = ['red', 'amber', 'green'];
+    const scoreOpts    = ['0', '1', '2', '3', '4'];
+    const consultOpts  = ['Visited', 'Not Yet Visited'];
+    const trafficLabel = v => v === 'red' ? '🔴 Red' : v === 'amber' ? '🟡 Amber' : '🟢 Green';
+
+    function makeDropdown(id, options, currentVal, displayFn) {
+      let h = `<select class="th-filter-select${currentVal ? ' has-value' : ''}" id="${id}" onchange="applyInTableFilter()" onclick="event.stopPropagation()">`;
+      h += `<option value="">All</option>`;
+      options.forEach(o => {
+        const label = displayFn ? displayFn(o) : o;
+        h += `<option value="${escHtml(o)}"${currentVal === o ? ' selected' : ''}>${escHtml(label)}</option>`;
+      });
+      return h + `</select>`;
+    }
+
+    const sortIcon = k => ovSort.col === k ? (ovSort.dir === 'asc' ? '▲' : '▼') : '⇅';
+    const th = (k, label, filter) =>
+      `<th class="${ovSort.col === k ? 'sort-' + ovSort.dir : ''}">
+         <div class="th-label" onclick="sortOverview('${k}')">${label}<span class="sort-icon">${sortIcon(k)}</span></div>
+         <div class="th-filter-wrap">${filter}</div>
+       </th>`;
+    const tip = (text, tipText) =>
+      `<div class="th-tooltip-wrap"><span>${text}</span>
+         <span class="th-tooltip-icon" tabindex="0">?</span>
+         <div class="th-tooltip-box">${tipText}</div></div>`;
+    const schoolInput =
+      `<input class="th-filter-input${inTbl.school ? ' has-value' : ''}" id="inTableSchool" type="text"
+         placeholder="Filter…" value="${escHtml(inTbl.school)}"
+         oninput="applyInTableFilter()" onclick="event.stopPropagation()">`;
+
+    let html = `<table class="overview-table"><thead><tr>
+      ${th('school',  '<span>School</span>',             schoolInput)}
+      ${th('score',   '<span>Score</span>',              makeDropdown('inTableScore',   scoreOpts,   inTbl.score))}
+      ${th('status',  '<span>Status</span>',             makeDropdown('inTableTraffic', trafficOpts, inTbl.traffic, trafficLabel))}
+      ${th('uplift',  '<span>Uplift Students</span>',    makeDropdown('inTableUplift',  qLabels,     inTbl.uplift))}
+      ${th('rental',  '<span>Rental Students</span>',    makeDropdown('inTableRental',  qLabels,     inTbl.rental))}
+      ${th('comlink', '<span>ComLink+ Students</span>',  makeDropdown('inTableComlink', qLabels,     inTbl.comlink))}
+      ${th('tqv',     '<span>TQV Band</span>',           makeDropdown('inTableTQV',     tqvVals,     inTbl.tqv))}
+      ${th('budget',  '<span>Budget Utilisation</span>', makeDropdown('inTableBudget',  budgetOpts,  inTbl.budget))}
+      ${th('ident',   tip('% Identified in SMT', 'Out of all Uplift students in this school, how many have been identified through the SMT process.'),
+                      makeDropdown('inTableIdent', qLabels, inTbl.ident))}
+      ${th('fas',     tip('% on FAS', 'Out of all students on the SMT list for this school, how many are on MOE FAS or School-based FAS.'),
+                      makeDropdown('inTableFas', qLabels, inTbl.fas))}
+      ${th('consult', '<span>Consultancy Visit</span>',  makeDropdown('inTableConsult', consultOpts, inTbl.consult))}
+    </tr></thead><tbody>`;
+
+    displaySchools.forEach(s => {
+      const upliftClass  = getQuartileLabel(s.upliftCount,  quartiles.upliftCount)  === 'q4' ? 'cell-red' : '';
+      const rentalClass  = getQuartileLabel(s.rentalCount,  quartiles.rentalCount)  === 'q4' ? 'cell-red' : '';
+      const comlinkClass = getQuartileLabel(s.comlinkCount, quartiles.comlinkCount) === 'q4' ? 'cell-red' : '';
+      const tqvClass     = norm(s.tqvValue).includes('band 4') ? 'cell-red' : '';
+      const budgetClass  = s.budgetPct !== null && s.budgetPct === 0 ? 'cell-red' : '';
+      const identClass   = s.identPct !== null && getQuartileLabel(s.identPct, quartiles.identPct) === 'q1' ? 'cell-red' : '';
+      const fasClass     = s.fasPct   !== null && getQuartileLabel(s.fasPct,   quartiles.fasPct)   === 'q1' ? 'cell-red' : '';
+      const consultClass = s.consultDate ? 'cell-green' : 'cell-red';
+      const consultDisp  = s.consultDate ? `✓ ${escHtml(s.consultDate)}` : 'Not Yet Visited';
+      const trafficTd    = `<span class="score-badge score-${s.traffic}"><span class="traffic-dot dot-${s.traffic}"></span>${s.traffic === 'red' ? '🔴 High Needs' : s.traffic === 'amber' ? '🟡 Moderate' : '🟢 On Track'}</span>`;
+
+      html += `<tr onclick="openSchoolDetail('${escHtml(s.normKey)}')">
+        <td><span class="overview-school-link">${escHtml(s.display)}</span></td>
+        <td><strong>${s.score}/4</strong></td>
+        <td>${trafficTd}</td>
+        <td class="${upliftClass}">${s.upliftCount.toLocaleString()}</td>
+        <td class="${rentalClass}">${s.rentalCount.toLocaleString()}</td>
+        <td class="${comlinkClass}">${s.comlinkCount.toLocaleString()}</td>
+        <td class="${tqvClass}">${escHtml(s.tqvValue)}</td>
+        <td class="${budgetClass}">${s.budgetPct !== null ? fmtPct(s.budgetPct) : '—'}</td>
+        <td class="${identClass}">${s.identPct  !== null ? fmtPct(s.identPct)  : '—'}</td>
+        <td class="${fasClass}">${s.fasPct    !== null ? fmtPct(s.fasPct)    : '—'}</td>
+        <td class="${consultClass}">${consultDisp}</td>
+      </tr>`;
+    });
+
+    if (displaySchools.length === 0) {
+      html += `<tr><td colspan="11" style="text-align:center;padding:40px;color:#a0aec0;cursor:default">🔍 No schools match the selected filters.</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  // Re-render but keep keyboard focus, so typing in the School box works
+  function applyInTableFilter() {
+    const a   = document.activeElement;
+    const id  = a && a.id;
+    const pos = a && a.tagName === 'INPUT' ? a.selectionStart : null;
+    renderOverviewTable();
+    if (id) {
+      const el = document.getElementById(id);
+      if (el) { el.focus(); if (pos !== null) el.setSelectionRange(pos, pos); }
+    }
+  }
+
+  function sortOverview(col) {
+    if (ovSort.col === col) ovSort.dir = ovSort.dir === 'asc' ? 'desc' : 'asc';
+    else { ovSort.col = col; ovSort.dir = 'asc'; }
+    renderOverviewTable();
+  }
+
+  function clearOverviewFilters() {
+    document.querySelectorAll('[id^="inTable"]').forEach(el => { el.value = ''; });
+    renderOverviewTable();
+  }
+
+  function openSchoolDetail(normKey) {
+    showPage('detail');
+    document.getElementById('detailSchoolSelect').value = normKey;
+    onDetailSchoolChange();
+  }
+
+  // <!-- ===== END OF PART 4 (script still open) ===== -->
+
+  // ── Detail school change ──────────────────────────────────────────────────
+  function onDetailSchoolChange() {
+    const normKey = document.getElementById('detailSchoolSelect').value;
+    currentDetailSchool = normKey || null;
+
+    currentTab         = 'uplift';
+    currentAfterSchool = 'pri';
+    currentPage        = 1;
+    colFilters         = { uplift: {}, smt: {}, familial: {}, afterschoolPri: {}, afterschoolSec: {} };
+    colUniqueValues    = { uplift: {}, smt: {}, familial: {}, afterschoolPri: {}, afterschoolSec: {} };
+    sortState          = {
+      uplift: { col: null, dir: 'asc' }, smt: { col: null, dir: 'asc' },
+      familial: { col: null, dir: 'asc' }, afterschoolPri: { col: null, dir: 'asc' },
+      afterschoolSec: { col: null, dir: 'asc' }
+    };
+
+    updateSchoolInfoBar();
+    updateTabCounts();
+    updateCharts();
+
+    const detailTabs    = document.getElementById('detailTabs');
+    const detailSection = document.getElementById('detailTableSection');
+    const subtoggle     = document.getElementById('afterschoolSubtoggle');
+
+    if (!normKey) {
+      detailTabs.style.display    = 'none';
+      detailSection.style.display = 'none';
+      subtoggle.classList.remove('visible');
+      document.getElementById('tableContainer').innerHTML = '';
+      document.getElementById('paginationBar').style.display = 'none';
+      return;
+    }
+
+    detailTabs.style.display    = 'flex';
+    detailSection.style.display = 'block';
+    subtoggle.classList.remove('visible');
+
+    document.querySelectorAll('#detailTabs .tab-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === 0);
+    });
+
+    ['uplift','smt','familial','afterschoolPri','afterschoolSec'].forEach(key => {
+      buildColUniqueValues(key, normKey);
+    });
+
+    applyFilters();
+  }
+
+  // ── After-school sub-toggle ───────────────────────────────────────────────
+  function switchAfterSchool(which) {
+    currentAfterSchool = which;
+    currentPage        = 1;
+    document.getElementById('subtoggle-pri').classList.toggle('active', which === 'pri');
+    document.getElementById('subtoggle-sec').classList.toggle('active', which === 'sec');
+    const key = which === 'pri' ? 'afterschoolPri' : 'afterschoolSec';
+    buildColUniqueValues(key, currentDetailSchool);
+    applyFilters();
+  }
+
+  // ── Build unique values ───────────────────────────────────────────────────
+  function buildColUniqueValues(tabKey, normKey) {
+    const data      = workbookData[tabKey];
+    const schoolCol = findColKey(data, 'school');
+    const rows      = normKey && schoolCol
+      ? data.filter(r => norm(r[schoolCol]) === normKey)
+      : [...data];
+
+    if (rows.length === 0) { colUniqueValues[tabKey] = {}; return; }
+
+    const headers = Object.keys(rows[0]).filter(h => !isHiddenCol(h));
+    colUniqueValues[tabKey] = {};
+    headers.forEach(h => {
+      if (isFreeTextCol(h)) return;
+      colUniqueValues[tabKey][h] = [...new Set(
+        rows.map(r => {
+          const raw = String(r[h] ?? '').trim();
+          if (YES_NO_FIELDS.has(norm(h))) {
+            const ny = normYesNo(raw);
+            if (ny === 'yes') return 'Yes';
+            if (ny === 'no')  return 'No';
+          }
+          return raw;
+        }).filter(Boolean)
+      )].sort();
+    });
+  }
+
+  // ── School info bar ───────────────────────────────────────────────────────
+  function updateSchoolInfoBar() {
+    const normKey = currentDetailSchool;
+    const bar     = document.getElementById('schoolInfoBar');
+    const nameEl  = document.getElementById('schoolInfoName');
+    const pillEl  = document.getElementById('schoolInfoPill');
+    const scoreEl = document.getElementById('schoolScoreBadge');
+
+    if (!normKey) { bar.classList.remove('visible'); return; }
+
+    const info = schoolNormMap[normKey];
+    bar.classList.add('visible');
+    nameEl.textContent = info ? info.display : normKey;
+    pillEl.innerHTML   = (info && info.isUplift)
+      ? '<span class="uplift-pill">⭐ Uplift 2.0 School</span>'
+      : '<span class="non-uplift-pill">Non-Uplift 2.0 School</span>';
+
+    if (info && info.isUplift) {
+      const metrics   = getSchoolMetrics(normKey);
+      const score     = calcScore(metrics);
+      const visitHtml = metrics.consultDate
+        ? `<span style="font-size:0.78rem;color:#276749;font-weight:600">📅 Last visit: ${escHtml(metrics.consultDate)}</span>`
+        : `<span style="font-size:0.78rem;color:#9b2c2c;font-weight:600">📅 No consultancy visit recorded</span>`;
+      scoreEl.innerHTML = trafficBadgeHtml(score) + ' ' + visitHtml;
+    } else {
+      scoreEl.innerHTML = '';
+    }
+  }
+
+  // ── Tab counts ────────────────────────────────────────────────────────────
+  function updateTabCounts() {
+    const normKey = currentDetailSchool;
+    ['uplift','smt','familial'].forEach(key => {
+      const data  = workbookData[key];
+      const col   = findColKey(data, 'school');
+      const count = normKey && col
+        ? data.filter(r => norm(r[col]) === normKey).length
+        : data.length;
+      document.getElementById(`tc-${key}`).textContent = count.toLocaleString();
+    });
+
+    const priCol   = findColKey(workbookData.afterschoolPri, 'school');
+    const secCol   = findColKey(workbookData.afterschoolSec, 'school');
+    const priCount = normKey && priCol
+      ? workbookData.afterschoolPri.filter(r => norm(r[priCol]) === normKey).length
+      : workbookData.afterschoolPri.length;
+    const secCount = normKey && secCol
+      ? workbookData.afterschoolSec.filter(r => norm(r[secCol]) === normKey).length
+      : workbookData.afterschoolSec.length;
+    document.getElementById('tc-afterschool').textContent = (priCount + secCount).toLocaleString();
+  }
+
+  // ── Detail charts ─────────────────────────────────────────────────────────
+  function updateCharts() {
+    if (typeof Chart === 'undefined') return;   // Chart.js blocked: skip charts
+    const normKey   = currentDetailSchool;
+    const chartsRow = document.getElementById('chartsRow');
+    if (!normKey) { chartsRow.classList.remove('visible'); destroyCharts(); return; }
+    chartsRow.classList.add('visible');
+    drawFASChart(normKey);
+    drawSMTIdentifiedChart(normKey);
+    drawBudgetChart(normKey);
+  }
+
+  function destroyCharts() {
+    if (chartFASInstance)    { chartFASInstance.destroy();    chartFASInstance    = null; }
+    if (chartSMTInstance)    { chartSMTInstance.destroy();    chartSMTInstance    = null; }
+    if (chartBudgetInstance) { chartBudgetInstance.destroy(); chartBudgetInstance = null; }
+  }
+
+  function drawFASChart(normKey) {
+    const data         = workbookData.smt;
+    const schoolCol    = findColKey(data, 'school');
+    const moeFasCol    = data.length > 0 ? Object.keys(data[0]).find(k => norm(k) === 'moe fas')          || null : null;
+    const schoolFasCol = data.length > 0 ? Object.keys(data[0]).find(k => norm(k) === 'school-based fas') || null : null;
+    const schoolRows   = schoolCol ? data.filter(r => norm(r[schoolCol]) === normKey) : [];
+    const total        = schoolRows.length;
+    const fasCount     = schoolRows.filter(r => {
+      const moe    = moeFasCol    ? normYesNo(r[moeFasCol])    : '';
+      const school = schoolFasCol ? normYesNo(r[schoolFasCol]) : '';
+      return moe === 'yes' || school === 'yes';
+    }).length;
+    const nonFasCount = total - fasCount;
+
+    if (chartFASInstance) { chartFASInstance.destroy(); chartFASInstance = null; }
+    if (total === 0) {
+      document.getElementById('legendFAS').innerHTML =
+        '<span style="font-size:0.78rem;color:#a0aec0">No SMT data for this school.</span>';
+      return;
+    }
+    const ctx = document.getElementById('chartFAS').getContext('2d');
+    chartFASInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: ['On FAS','Not on FAS'], datasets: [{ data: [fasCount, nonFasCount], backgroundColor: ['#4299e1','#e2e8f0'], borderWidth: 2, borderColor: ['#2b6cb0','#cbd5e0'] }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} (${total > 0 ? Math.round((c.parsed/total)*100) : 0}%)` } } } }
+    });
+    document.getElementById('legendFAS').innerHTML = `
+      <div class="legend-item"><span class="legend-dot" style="background:#4299e1"></span><span>On FAS</span>
+        <span class="legend-val">${fasCount} <span style="font-weight:400;color:#718096">(${total > 0 ? Math.round((fasCount/total)*100) : 0}%)</span></span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e2e8f0"></span><span>Not on FAS</span>
+        <span class="legend-val">${nonFasCount} <span style="font-weight:400;color:#718096">(${total > 0 ? Math.round((nonFasCount/total)*100) : 0}%)</span></span></div>
+      <div class="legend-item" style="margin-top:4px;border-top:1px solid #e2e8f0;padding-top:6px">
+        <span style="color:#718096">Total SMT students</span><span class="legend-val">${total}</span></div>`;
+  }
+
+  function drawSMTIdentifiedChart(normKey) {
+    const data       = workbookData.uplift;
+    const schoolCol  = findColKey(data, 'school');
+    const identCol   = data.length > 0 ? Object.keys(data[0]).find(k => norm(k) === 'identified in smt') || null : null;
+    const schoolRows = schoolCol ? data.filter(r => norm(r[schoolCol]) === normKey) : [];
+    const total      = schoolRows.length;
+    const identCount = identCol
+      ? schoolRows.filter(r => normYesNo(r[identCol]) === 'yes').length : 0;
+    const notIdentCount = total - identCount;
+
+    if (chartSMTInstance) { chartSMTInstance.destroy(); chartSMTInstance = null; }
+    if (total === 0) {
+      document.getElementById('legendSMT').innerHTML =
+        '<span style="font-size:0.78rem;color:#a0aec0">No Uplift data for this school.</span>';
+      return;
+    }
+    const ctx = document.getElementById('chartSMT').getContext('2d');
+    chartSMTInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: ['Identified in SMT','Not Identified'], datasets: [{ data: [identCount, notIdentCount], backgroundColor: ['#48bb78','#e2e8f0'], borderWidth: 2, borderColor: ['#276749','#cbd5e0'] }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed} (${total > 0 ? Math.round((c.parsed/total)*100) : 0}%)` } } } }
+    });
+    document.getElementById('legendSMT').innerHTML = `
+      <div class="legend-item"><span class="legend-dot" style="background:#48bb78"></span><span>Identified in SMT</span>
+        <span class="legend-val">${identCount} <span style="font-weight:400;color:#718096">(${total > 0 ? Math.round((identCount/total)*100) : 0}%)</span></span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e2e8f0"></span><span>Not Identified</span>
+        <span class="legend-val">${notIdentCount} <span style="font-weight:400;color:#718096">(${total > 0 ? Math.round((notIdentCount/total)*100) : 0}%)</span></span></div>
+      <div class="legend-item" style="margin-top:4px;border-top:1px solid #e2e8f0;padding-top:6px">
+        <span style="color:#718096">Total Uplift students</span><span class="legend-val">${total}</span></div>`;
+  }
+
+  function drawBudgetChart(normKey) {
+    const data            = workbookData.budget;
+    const budgetSchoolCol = findColKey(data, 'school name') || findColKey(data, 'school');
+    const propCol         = findColKeyPartial(data, 'proportion utilised') || findColKeyPartial(data, 'proportion utilized');
+    if (chartBudgetInstance) { chartBudgetInstance.destroy(); chartBudgetInstance = null; }
+    if (!budgetSchoolCol || !propCol || data.length === 0) {
+      document.getElementById('legendBudget').innerHTML = '<span style="font-size:0.78rem;color:#a0aec0">No Budget data available.</span>';
+      return;
+    }
+    const budgetRow = data.find(r => norm(r[budgetSchoolCol]) === normKey);
+    if (!budgetRow) {
+      document.getElementById('legendBudget').innerHTML = '<span style="font-size:0.78rem;color:#a0aec0">No Budget data for this school.</span>';
+      return;
+    }
+    const pct = parsePct(budgetRow[propCol]);
+    if (pct === null) {
+      document.getElementById('legendBudget').innerHTML = '<span style="font-size:0.78rem;color:#a0aec0">Budget proportion data unavailable.</span>';
+      return;
+    }
+    const used      = Math.min(pct, 100);
+    const remaining = Math.max(0, 100 - used);
+    const color     = pct >= 75 ? '#48bb78' : pct >= 50 ? '#ed8936' : '#fc8181';
+    const borderCol = pct >= 75 ? '#276749' : pct >= 50 ? '#c05621' : '#9b2c2c';
+    const ctx = document.getElementById('chartBudget').getContext('2d');
+    chartBudgetInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: ['Utilised','Remaining'], datasets: [{ data: [used, remaining], backgroundColor: [color,'#e2e8f0'], borderWidth: 2, borderColor: [borderCol,'#cbd5e0'] }] },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.label}: ${c.parsed.toFixed(1)}%` } } } }
+    });
+    document.getElementById('legendBudget').innerHTML = `
+      <div class="legend-item"><span class="legend-dot" style="background:${color}"></span><span>Utilised</span>
+        <span class="legend-val" style="color:${color}">${fmtPct(pct)}</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#e2e8f0"></span><span>Remaining</span>
+        <span class="legend-val">${fmtPct(remaining)}</span></div>`;
+  }
+
+  // ── Detail sort ───────────────────────────────────────────────────────────
+  function handleSort(colKey) {
+    const key = activeDataKey();
+    const s   = sortState[key];
+    if (s.col === colKey) { s.dir = s.dir === 'asc' ? 'desc' : 'asc'; }
+    else { s.col = colKey; s.dir = 'asc'; }
+    currentPage = 1;
+    applyFilters();
+  }
+
+  function sortData(data) {
+    const key = activeDataKey();
+    const s   = sortState[key];
+    if (!s.col) return data;
+    return [...data].sort((a, b) => {
+      const av   = String(a[s.col] ?? '');
+      const bv   = String(b[s.col] ?? '');
+      const numA = parseFloat(av), numB = parseFloat(bv);
+      const cmp  = (!isNaN(numA) && !isNaN(numB)) ? numA - numB : av.localeCompare(bv);
+      return s.dir === 'asc' ? cmp : -cmp;
+    });
+  }
+
+  // ── Detail column filters ─────────────────────────────────────────────────
+  function onColFilterChange(colKey, value) {
+    const key = activeDataKey();
+    if (value === '') { delete colFilters[key][colKey]; }
+    else { colFilters[key][colKey] = value; }
+    currentPage = 1;
+    applyFilters();
+  }
+
+  function onColTextFilterInput(colKey, value) {
+    const key = activeDataKey();
+    clearTimeout(colFilterTimers[colKey]);
+    colFilterTimers[colKey] = setTimeout(() => {
+      if (value.trim() === '') { delete colFilters[key][colKey]; }
+      else { colFilters[key][colKey] = value.trim(); }
+      currentPage = 1;
+      applyFilters();
+    }, 250);
+  }
+
+  function clearColFilters() {
+    colFilters[activeDataKey()] = {};
+    currentPage = 1;
+    applyFilters();
+  }
+
+  function hasActiveColFilters() {
+    return Object.keys(colFilters[activeDataKey()]).length > 0;
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    currentTab  = tab;
+    currentPage = 1;
+    document.querySelectorAll('#detailTabs .tab-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', ['uplift','smt','familial','afterschool'][i] === tab);
+    });
+    const subtoggle = document.getElementById('afterschoolSubtoggle');
+    if (tab === 'afterschool') {
+      subtoggle.classList.add('visible');
+      currentAfterSchool = 'pri';
+      document.getElementById('subtoggle-pri').classList.add('active');
+      document.getElementById('subtoggle-sec').classList.remove('active');
+      buildColUniqueValues('afterschoolPri', currentDetailSchool);
+    } else {
+      subtoggle.classList.remove('visible');
+    }
+    applyFilters();
+  }
+
+  function onRowsPerPageChange() {
+    rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+    currentPage = 1;
+    renderPage();
+  }
+
+  // ── Core filter + sort pipeline ───────────────────────────────────────────
+  function applyFilters() {
+    const key       = activeDataKey();
+    const data      = workbookData[key];
+    const normKey   = currentDetailSchool;
+    const schoolCol = findColKey(data, 'school');
+
+    // 1. School filter
+    let result = normKey && schoolCol
+      ? data.filter(r => norm(r[schoolCol]) === normKey)
+      : [...data];
+
+    // 2. Per-column filters
+    const activeFilters = colFilters[key];
+    if (Object.keys(activeFilters).length > 0) {
+      result = result.filter(row =>
+        Object.entries(activeFilters).every(([colKey, filterVal]) => {
+          if (isFreeTextCol(colKey)) {
+            return norm(row[colKey]).includes(norm(filterVal));
+          }
+          if (YES_NO_FIELDS.has(norm(colKey))) {
+            return normYesNo(row[colKey]) === norm(filterVal);
+          }
+          return norm(row[colKey]) === norm(filterVal);
+        })
+      );
+    }
+
+    // 3. Sort
+    result       = sortData(result);
+    filteredData = result;
+
+    const titles = {
+      uplift:         'Uplift List',
+      smt:            'SMT List',
+      familial:       'Familial Risk 2026',
+      afterschoolPri: 'After-School Support (Primary)',
+      afterschoolSec: 'After-School Support (Secondary)'
+    };
+    document.getElementById('tableTitle').textContent = titles[key] || 'Data';
+    document.getElementById('rowCount').textContent =
+      `${filteredData.length.toLocaleString()} record${filteredData.length !== 1 ? 's' : ''}`;
+
+    document.getElementById('clearColFiltersBtn')
+      .classList.toggle('visible', hasActiveColFilters());
+
+    currentPage = 1;
+    renderPage();
+  }
+
+  // ── Render page ───────────────────────────────────────────────────────────
+  function renderPage() {
+    const container     = document.getElementById('tableContainer');
+    const paginationBar = document.getElementById('paginationBar');
+
+    if (!filteredData || filteredData.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state"><div class="icon">🔍</div>
+        <p>${currentDetailSchool
+          ? 'No records found for this school in the selected tab.'
+          : 'Select a school to view records.'}</p></div>`;
+      paginationBar.style.display = 'none';
+      return;
+    }
+
+    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    currentPage      = Math.min(currentPage, totalPages);
+    const start      = (currentPage - 1) * rowsPerPage;
+    const end        = Math.min(start + rowsPerPage, filteredData.length);
+    const pageData   = filteredData.slice(start, end);
+
+    container.innerHTML = buildTableHTML(pageData);
+    paginationBar.style.display = 'flex';
+    document.getElementById('paginationInfo').textContent =
+      `Showing ${(start + 1).toLocaleString()}–${end.toLocaleString()} of ${filteredData.length.toLocaleString()} records`;
+    renderPaginationControls(totalPages);
+  }
+
+  // ── Pagination controls ───────────────────────────────────────────────────
+  function renderPaginationControls(totalPages) {
+    const controls = document.getElementById('paginationControls');
+    let html = `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ Prev</button>`;
+    getPageNumbers(currentPage, totalPages).forEach(p => {
+      if (p === '…') html += `<span style="padding:0 4px;color:#a0aec0;font-size:0.8rem">…</span>`;
+      else html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+    });
+    html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next ›</button>`;
+    controls.innerHTML = html;
+  }
+
+  function getPageNumbers(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages = [1];
+    if (current > 3) pages.push('…');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+    if (current < total - 2) pages.push('…');
+    pages.push(total);
+    return pages;
+  }
+
+  function goToPage(page) {
+    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPage();
+    document.getElementById('tableWrapper').scrollTop = 0;
+  }
+
+  // ── Detail table HTML builder ─────────────────────────────────────────────
+  function buildTableHTML(pageData) {
+    if (!pageData || pageData.length === 0) return '';
+    const key        = activeDataKey();
+    const allHeaders = Object.keys(filteredData[0]);
+    const headers    = allHeaders.filter(h => !isHiddenCol(h));
+    const s          = sortState[key];
+    const cf         = colFilters[key];
+    const uv         = colUniqueValues[key];
+
+    let html = '<table><thead><tr>';
+
+    headers.forEach(h => {
+      const thClass  = s.col === h ? (s.dir === 'asc' ? 'sort-asc' : 'sort-desc') : '';
+      const sortIcon = s.col === h ? (s.dir === 'asc' ? '▲' : '▼') : '⇅';
+      const isFree   = isFreeTextCol(h);
+      const curVal   = cf[h] || '';
+      const tooltip  = COL_TOOLTIPS[norm(h)] || null;
+
+      const tooltipHtml = tooltip
+        ? `<div class="th-tooltip-wrap">
+             <span>${escHtml(h)}</span>
+             <span class="th-tooltip-icon" tabindex="0">?</span>
+             <div class="th-tooltip-box">${escHtml(tooltip)}</div>
+           </div>`
+        : `<span>${escHtml(h)}</span>`;
+
+      const labelHtml = `
+        <div class="th-label" onclick="handleSort('${escHtml(h)}')">
+          ${tooltipHtml}
+          <span class="sort-icon">${sortIcon}</span>
+        </div>`;
+
+      let filterHtml = '';
+      if (isFree) {
+        filterHtml = `
+          <div class="th-filter-wrap">
+            <input class="th-filter-input${curVal ? ' has-value' : ''}"
+              type="text" placeholder="Search…" value="${escHtml(curVal)}"
+              oninput="onColTextFilterInput('${escHtml(h)}', this.value)"
+              onclick="event.stopPropagation()">
+          </div>`;
+      } else {
+        const options = uv[h] || [];
+        let sel = `<select class="th-filter-select${curVal ? ' has-value' : ''}"
+          onchange="onColFilterChange('${escHtml(h)}', this.value)"
+          onclick="event.stopPropagation()">
+          <option value="">All</option>`;
+        options.forEach(o => {
+          sel += `<option value="${escHtml(o)}"${curVal === o ? ' selected' : ''}>${escHtml(o)}</option>`;
+        });
+        sel += `</select>`;
+        filterHtml = `<div class="th-filter-wrap">${sel}</div>`;
+      }
+
+      html += `<th class="${thClass}">${labelHtml}${filterHtml}</th>`;
+    });
+
+    html += '</tr></thead><tbody>';
+
+    pageData.forEach(row => {
+      html += '<tr>';
+      headers.forEach(h => {
+        const rawVal = String(row[h] ?? '');
+        if (YES_NO_FIELDS.has(norm(h))) {
+          const ny = normYesNo(rawVal);
+          if (ny === 'yes')          html += `<td><span class="pill pill-yes">Yes</span></td>`;
+          else if (ny === 'no')      html += `<td><span class="pill pill-no">No</span></td>`;
+          else if (rawVal === '')    html += `<td><span class="pill pill-na">—</span></td>`;
+          else                       html += `<td>${escHtml(rawVal)}</td>`;
+        } else {
+          html += `<td>${escHtml(rawVal)}</td>`;
+        }
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    return html;
+  }
+
+  // ── Excel export ──────────────────────────────────────────────────────────
+  function exportOverviewExcel() {
+    if (!lastOverviewRows.length) { alert('No schools to export.'); return; }
+    const statusLabel = { red: 'High Needs', amber: 'Moderate', green: 'On Track' };
+    const r1 = v => v === null ? '' : Math.round(v * 10) / 10;
+
+    const rows = lastOverviewRows.map(s => ({
+      'School':                 s.display,
+      'Score (out of 4)':       s.score,
+      'Status':                 statusLabel[s.traffic],
+      'Uplift Students':        s.upliftCount,
+      'Rental Students':        s.rentalCount,
+      'ComLink+ Students':      s.comlinkCount,
+      'TQV Band':               s.tqvValue,
+      'Budget Utilisation (%)': r1(s.budgetPct),
+      '% Identified in SMT':    r1(s.identPct),
+      '% on FAS':               r1(s.fasPct),
+      'Consultancy Visit':      s.consultDate || 'Not Yet Visited'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(k.length + 2, 14) }));
+    ws['!cols'][0] = { wch: 36 };
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Overview');
+    XLSX.writeFile(wb, `Uplift_Overview_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+  function exportDetailExcel() {
+    if (!filteredData || filteredData.length === 0) { alert('No records to export.'); return; }
+
+    const idCols = Object.keys(filteredData[0]).filter(h => IDENTIFIER_COLS.has(norm(h)));
+    let drop = [];
+    if (idCols.length > 0) {
+      const include = confirm(
+        'This tab contains student identifiers (' + idCols.join(', ') + ').\n\n' +
+        'OK = include them in the file\nCancel = exclude them');
+      if (!include) drop = idCols;
+    }
+
+    // Exports ALL filtered/sorted rows, not just the current page
+    const rows = filteredData.map(r => {
+      const o = {};
+      Object.keys(r).forEach(h => { if (!drop.includes(h)) o[h] = r[h]; });
+      return o;
+    });
+
+    const tabName   = document.getElementById('tableTitle').textContent;
+    const info      = schoolNormMap[currentDetailSchool];
+    const schoolTxt = info ? info.display : 'All';
+    const safe      = s => s.replace(/[\\\/?*\[\]:]/g, '').trim();
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, safe(tabName).slice(0, 31) || 'Data');
+    XLSX.writeFile(wb, `${safe(schoolTxt)} - ${safe(tabName)} - ${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
+</script>
+</body>
+</html>
